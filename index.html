@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>مساعد المصطلحات (RTL)</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            violetx: {
+              950: '#1b0b2e',
+              900: '#240d3a',
+              800: '#2f0f4a',
+              700: '#3b1160',
+              200: '#ddd6fe',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    .glass { backdrop-filter: blur(10px); }
+  </style>
+</head>
+
+<body class="min-h-screen p-4 bg-gradient-to-b from-violetx-950 via-violetx-900 to-violetx-800 text-white">
+  <div class="max-w-2xl mx-auto">
+    <header class="text-center mb-6">
+      <h1 class="text-2xl font-extrabold tracking-tight">مساعد المصطلحات</h1>
+      <p class="text-sm opacity-80 mt-2">زر واحد بالذكاء الاصطناعي → 4 خانات + صورة + نسخ RTL</p>
+    </header>
+
+    <div class="rounded-3xl border border-white/10 bg-white/5 glass p-4 shadow-lg">
+      <label class="block text-sm font-semibold mb-2" for="termInput">اكتب مصطلحًا (طبي أو عام) بالعربي أو الإنجليزي</label>
+      <input id="termInput"
+        class="w-full rounded-2xl px-4 py-3 bg-black/20 border border-white/10 outline-none focus:ring-2 focus:ring-white/20"
+        placeholder="مثال: Osteomyelitis / التهاب العظم / GitHub / virals"
+      />
+
+      <div class="flex flex-wrap gap-2 mt-3">
+        <button id="aiBtn"
+          class="flex-1 rounded-2xl px-4 py-3 font-bold bg-white text-violetx-950 hover:opacity-90">
+          ابحث بالذكاء الاصطناعي
+        </button>
+
+        <button id="copyBtn"
+          class="flex-1 rounded-2xl px-4 py-3 font-semibold border border-white/15 hover:bg-white/10">
+          نسخ 4 أسطر (RTL)
+        </button>
+
+        <button id="googleBtn"
+          class="flex-1 rounded-2xl px-4 py-3 font-semibold border border-white/15 hover:bg-white/10">
+          فتح في Google
+        </button>
+
+        <button id="themeBtn"
+          class="flex-1 rounded-2xl px-4 py-3 font-semibold border border-white/15 hover:bg-white/10">
+          فاتح/غامق
+        </button>
+      </div>
+
+      <div id="status" class="mt-3 text-xs opacity-80"></div>
+    </div>
+
+    <!-- النتائج: 4 خانات + خانة للصورة -->
+    <section class="mt-5 space-y-3">
+
+      <div class="rounded-3xl border border-white/10 bg-white/5 glass p-4">
+        <div class="text-sm font-bold opacity-90 mb-1">الإنجليزي</div>
+        <div id="englishOut" class="break-words"></div>
+      </div>
+
+      <div class="rounded-3xl border border-white/10 bg-white/5 glass p-4">
+        <div class="text-sm font-bold opacity-90 mb-1">النطق بالإنجليزي بالحروف العربية (تقريبي)</div>
+        <div id="pronOut" class="break-words"></div>
+      </div>
+
+      <div class="rounded-3xl border border-white/10 bg-white/5 glass p-4">
+        <div class="text-sm font-bold opacity-90 mb-1">الترجمة العربية</div>
+        <div id="arabicOut" class="break-words"></div>
+      </div>
+
+      <div class="rounded-3xl border border-white/10 bg-white/5 glass p-4">
+        <div class="text-sm font-bold opacity-90 mb-1">وصف المصطلح (بالعربي فقط)</div>
+        <div id="descOut" class="break-words"></div>
+      </div>
+
+      <div class="rounded-3xl border border-white/10 bg-white/5 glass p-4">
+        <div class="text-sm font-bold opacity-90 mb-2">الصورة</div>
+        <div id="imgOut" class="min-h-[80px] flex items-center justify-center opacity-80 text-sm">
+          لا توجد صورة بعد.
+        </div>
+      </div>
+
+      <p class="text-xs opacity-70">
+        زر النسخ ينسخ فقط 4 أسطر بصيغة RTL لسهولة اللصق في Word.
+      </p>
+    </section>
+  </div>
+
+<script>
+  const RLM = "\u200F";
+  const $ = (id) => document.getElementById(id);
+
+  function setStatus(s){ $("status").textContent = s || ""; }
+  function clearOut(){
+    $("englishOut").textContent = "";
+    $("pronOut").textContent = "";
+    $("arabicOut").textContent = "";
+    $("descOut").textContent = "";
+    $("imgOut").innerHTML = "لا توجد صورة بعد.";
+  }
+
+  // زر Google
+  $("googleBtn").addEventListener("click", () => {
+    const term = $("termInput").value.trim();
+    if(!term) return;
+    window.open("https://www.google.com/search?q=" + encodeURIComponent(term), "_blank");
+  });
+
+  // زر الثيم
+  let light = false;
+  $("themeBtn").addEventListener("click", () => {
+    light = !light;
+    if(light){
+      document.body.className = "min-h-screen p-4 bg-gradient-to-b from-violetx-200 via-white to-violet-100 text-slate-900";
+      document.querySelectorAll(".glass").forEach(el => el.style.backdropFilter = "blur(10px)");
+      document.querySelectorAll(".bg-white\\/5").forEach(el => el.classList.add("bg-black/5"));
+      setStatus("✅ وضع فاتح");
+    } else {
+      document.body.className = "min-h-screen p-4 bg-gradient-to-b from-violetx-950 via-violetx-900 to-violetx-800 text-white";
+      setStatus("✅ وضع غامق");
+    }
+    setTimeout(()=>setStatus(""), 1200);
+  });
+
+  // زر النسخ (أول 4 فقط)
+  $("copyBtn").addEventListener("click", async () => {
+    const english = $("englishOut").textContent.trim();
+    const pron = $("pronOut").textContent.trim();
+    const arabic = $("arabicOut").textContent.trim();
+    const desc = $("descOut").textContent.trim();
+
+    const lines = [
+      `${RLM}English: ${english}`,
+      `${RLM}النطق بالعربية: ${pron}`,
+      `${RLM}العربي: ${arabic}`,
+      `${RLM}الوصف: ${desc}`,
+    ].join("\n");
+
+    await navigator.clipboard.writeText(lines);
+    setStatus("✅ تم نسخ 4 أسطر RTL");
+    setTimeout(()=>setStatus(""), 1500);
+  });
+
+  async function fetchWikiImage(title){
+    // صورة فقط (اختياري) من ويكيبيديا — بدون الاعتماد عليها للنص
+    try{
+      const url = "https://ar.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(title);
+      const r = await fetch(url);
+      if(!r.ok) return "";
+      const j = await r.json();
+      return (j && j.thumbnail && j.thumbnail.source) ? j.thumbnail.source : "";
+    } catch {
+      return "";
+    }
+  }
+
+  // الزر الوحيد: AI
+  $("aiBtn").addEventListener("click", async () => {
+    const term = $("termInput").value.trim();
+    if(!term) return;
+
+    clearOut();
+    setStatus("⏳ جاري البحث بالذكاء الاصطناعي...");
+
+    try{
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ term })
+      });
+
+      if(!res.ok){
+        const t = await res.text();
+        throw new Error(t || ("HTTP " + res.status));
+      }
+
+      const data = await res.json();
+
+      $("englishOut").textContent = data.english || "";
+      $("pronOut").textContent = data.pronunciation_ar || "";
+      $("arabicOut").textContent = data.arabic || "";
+      $("descOut").textContent = data.description_ar || "";
+
+      // صورة: نحاول من العنوان العربي ثم الإنجليزي
+      let img = "";
+      if(data.arabic) img = await fetchWikiImage(data.arabic);
+      if(!img && data.english) img = await fetchWikiImage(data.english);
+
+      if(img){
+        $("imgOut").innerHTML = `<img src="${img}" alt="صورة" class="max-w-full rounded-2xl shadow" />`;
+      } else {
+        $("imgOut").textContent = "لم أجد صورة مناسبة.";
+      }
+
+      setStatus("✅ تم");
+      setTimeout(()=>setStatus(""), 1200);
+    } catch(e){
+      console.error(e);
+      setStatus("❌ خطأ: " + (e?.message || "غير معروف"));
+    }
+  });
+
+  // Enter = نفس زر AI
+  $("termInput").addEventListener("keydown", (e) => {
+    if(e.key === "Enter") $("aiBtn").click();
+  });
+</script>
+
+</body>
+</html>
